@@ -20,6 +20,13 @@ func ShortenURL(ctx context.Context, rdb *redis.Client, url string) (string, err
 		log.Println(err)
 		return "", err
 	}
-
 	return shortURL, nil
+}
+
+func ConvertedURL(ctx context.Context, rdb *redis.Client, shortURL string) (string, error) {
+	url, err := rdb.Get(ctx, KeyString+shortURL).Result()
+	if err != nil {
+		return "", err
+	}
+	return url, nil
 }

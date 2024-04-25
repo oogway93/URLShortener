@@ -22,30 +22,36 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 	data := &ViewData{
 		Title: "Url shortener",
 	}
-	inputURL := r.FormValue("input-url")
-	tmpl.Execute(w, data)
 
+	tmpl.Execute(w, data)
+	initialURL := r.FormValue("initial-url")
+	shortURL := r.FormValue("short-url")
 	rdb := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	defer rdb.Close()
 	ctx := context.Background()
-	shortURL, err := urlShortener.ShortenURL(ctx, rdb, inputURL)
-	if err != nil {
-		log.Println(err)
-		return
-	} else {
-		jsonResponse, _ := json.Marshal(map[string]string{"short-url": shortURL})
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		w.Write(jsonResponse)
+	if len(shortURL) != 0 {
+		convertedURL, err := urlShortener.ConvertedURL(ctx, rdb, shortURL)
+		if err != nil {
+			log.Println(err)
+			return
+		} else {
+			jsonResponse, _ := json.Marshal(map[string]string{"Converted URL": convertedURL})
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			w.Write(jsonResponse)
+		}
 	}
-}
-
-func RedirectToURL(rdb *redis.Client, shortURL string) (string, error) {
-	ctx := context.Background()
-	url, err := rdb.Get(ctx, urlShortener.KeyString+shortURL).Result()
-	if err != nil {
-		return "", err
+	if len(initialURL) != 0 {
+		shortenURL, err := urlShortener.ShortenURL(ctx, rdb, initialURL)
+		if err != nil {
+			log.Println(err)
+			return
+		} else {
+			jsonResponse, _ := json.Marshal(map[string]string{"Shorten URL": shortenURL})
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			w.Write(jsonResponse)
+		}
 	}
 
-	return url, nil
 }
