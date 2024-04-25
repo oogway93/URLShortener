@@ -53,5 +53,4 @@ func MainPage(w http.ResponseWriter, r *http.Request) {
 			w.Write(jsonResponse)
 		}
 	}
-
 }
